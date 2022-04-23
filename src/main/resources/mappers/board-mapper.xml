@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="BoardDao">
+
+
+	<resultMap
+		type="com.group.exam.board.command.BoardlistCommand" id="listCommand">
+		<id property="bSeq" column="board_seq" />
+		<id property="bTitle" column="board_title" />
+		<id property="bRegday" column="board_reg_day" />
+		<id property="bLike" column="board_like" />
+		<id property="bCount" column="board_count" />
+		<id property="mNickname" column="member_nickname" />
+		<id property="mSeq" column="member_seq" />
+		<id property="bContent" column="board_content" />
+	</resultMap>
+
+	<resultMap
+		type="com.group.exam.board.command.QuestionAdayCommand"
+		id="questionCommand">
+		<id property="qSeq" column="question_seq" />
+		<id property="qContent" column="question_content" />
+	</resultMap>
+
+	<insert id="insertBoard" parameterType="boardVo">
+		insert into BOARD
+		(B_SEQ, BOARD_TITLE, BOARD_CONTENT,BOARD_REG_DAY,
+		MEMBER_SEQ,
+		QUESTION_SEQ)values
+		(B_SEQ.nextval, #{bTitle}, #{bContent}, SYSDATE,
+		(select MEMBER_SEQ from MEMBER where MEMBER_SEQ = #{mSeq}), (select
+		QUESTION_SEQ from QUESTION where QUESTION_SEQ= #{qSeq}))
+
+	</insert>
+
+	<update id="updateBoard" parameterType="HashMap">
+		update BOARD set
+		BOARD_TITLE = #{bTitle}, BOARD_CONTENT = #{bContent} where BOARD_SEQ =
+		#{bSeq}
+	</update>
+
+	<delete id="deleteBoardOne" parameterType="HashMap">
+		delete from BOARD
+		where BOARD_SEQ = #{bSeq} and MEMBER_SEQ = #{mSeq}
+	</delete>
+
+
+
+	<!-- 전체 게시글 -->
+	<select id="boardlist" parameterType="criteria"
+		resultMap="listCommand">
+	
+<![CDATA[select *
+from (select ROWNUM rn, B.BOARD_SEQ, B.BOARD_TITLE, B.BOARD_REG_DAY,
+B.BOARD_LIKE, B.BOARD_COUNT, M.MEMBER_NICKNAME, M.MEMBER_SEQ  
+from MEMBER M join BOARD B on M.MEMBER_SEQ = B.MEMBER_SEQ )
+where rn between #{rowStart} and #{rowEnd} ]]>
+	</select>
+
+	<!-- -->
+	<select id="questionselect" parameterType="Integer"
+		resultMap="questionCommand">
+		select question_content, question_seq from
+		(select rownum AS ROWNUMBER, question_content, question_seq
+		from question
+		where question_status = 'T')q
+		where q.ROWNUMBER = #{num}
+	</select>
+
+	<select id="getSequence" resultType="Integer">
+		select num_seq.nextval from
+		dual
+	</select>
+
+	<select id="currentSequence" resultType="Integer">
+		select LAST_NUMBER-1
+		FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'NUM_SEQ'
+	</select>
+
+
+
+	<!-- 내 게시글 모아보기 -->
+	<select id="boardMylist" parameterType="HashMap"
+		resultMap="listCommand">
+
+		<![CDATA[
+select *
+from (select ROWNUM rn, B.BOARD_SEQ, 
+B.BOARD_TITLE, B.BOARD_REG_DAY, B.BOARD_LIKE, B.BOARD_COUNT, 
+M.MEMBER_NICKNAME, M.MEMBER_SEQ 
+from MEMBER M join BOARD B on M.MEMBER_SEQ = B.MEMBER_SEQ 
+where M.member_seq = #{mSeq}) where rn between #{rowStart} and #{rowEnd}
+		]]>
+
+	</select>
+
+	<!-- 게시글 디테일 / 댓글 테이블 추가 해야함 -->
+	<select id="boardlistDetail" parameterType="Integer"
+		resultMap="listCommand">
+
+		<![CDATA[select B.BOARD_SEQ, B.BOARD_TITLE, B.BOARD_REG_DAY, B.BOARD_LIKE, B.BOARD_COUNT, M.MEMBER_NICKNAME, M.MEMBER_SEQ, B.BOARD_CONTENT
+from MEMBER M join BOARD B on M.MEMBER_SEQ = B.MEMBER_SEQ where B.BOARD_SEQ = #{bSeq}]]>
+
+	</select>
+
+	<!-- 게시판 전체 글 수 -->
+	<select id="boardlistCount" resultType="Integer">
+		select count(*) from
+		BOARD
+
+	</select>
+
+	<!-- 내가 쓴 글 수 -->
+	<select id="boardMylistCount" parameterType="Integer"
+		resultType="Integer">
+		select count(*) from
+		BOARD where MEMBER_SEQ = #{mSeq}
+
+	</select>
+
+	<!-- board 조회수 up -->
+	<update id="boardCountup" parameterType="Integer">
+		update BOARD set
+		BOARD_COUNT = BOARD_COUNT+1 where BOARD_SEQ = #{bSeq}
+	</update>
+
+
+	<!-- 게시글 수에 따른 멤버 레벨 변경 -->
+	<update id="memberLevelup" parameterType="HashMap">
+
+
+		<if test="mytotal >10">
+			update MEMBER set MEMBER_LEVEL = MEMBER_LEVEL+1 where
+			MEMBER_SEQ = #{mSeq}
+			and #{mLevel} = 0
+		</if>
+
+		<if test="mytotal >30">
+			update MEMBER set MEMBER_LEVEL = MEMBER_LEVEL+1 where
+			MEMBER_SEQ = #{mSeq}
+			and #{mLevel} = 1
+		</if>
+
+		<if test="mytotal >50">
+			update MEMBER set MEMBER_LEVEL = MEMBER_LEVEL+1 where
+			MEMBER_SEQ = #{mSeq}
+			and #{mLevel} = 2
+		</if>
+	</update>
+
+</mapper>

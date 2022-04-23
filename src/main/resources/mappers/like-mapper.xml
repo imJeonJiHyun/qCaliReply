@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="LikeDao">
+
+	
+	<insert id="createLike" parameterType="com.group.exam.board.vo.BoardLikeVo">
+		insert into "LIKE" (LIKE_SEQ, BOARD_SEQ, MEMBER_SEQ) values (L_SEQ.NEXTVAL, #{bSeq}, #{mSeq})
+	
+	</insert>
+	
+	<delete id="deleteLike" parameterType="com.group.exam.board.vo.BoardLikeVo">
+		delete from "LIKE" where BOARD_SEQ = #{bSeq} and MEMBER_SEQ = #{mSeq} 
+	</delete>
+	
+	
+	<update id="updateLike" parameterType="com.group.exam.board.vo.BoardLikeVo">
+		update BOARD set BOARD_LIKE = (select count(*) from "LIKE" where BOARD_SEQ = #{bSeq}) where BOARD_SEQ = #{bSeq}
+	</update>
+	
+	<select id="getLike" parameterType="com.group.exam.board.vo.BoardLikeVo" resultType="Integer">
+		select count(LIKE_SEQ) from "LIKE" where BOARD_SEQ = #{bSeq} and MEMBER_SEQ = #{mSeq}
+	</select>
+	
+
+</mapper>
